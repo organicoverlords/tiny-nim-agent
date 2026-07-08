@@ -28,6 +28,10 @@ This is the canonical product scope, status, proof, and completion contract for 
 
 ## Product rules
 
+- Product direction: ChatGPT-like WebUI with OpenCode-like agentic coding capabilities.
+- Copy proven product behavior before inventing systems.
+- Keep docs and code minimal, neat, and grounded in working principles.
+- No tracked file may exceed 600 lines. Target under 400 lines.
 - This repo must stay smaller and stricter than the old app stack.
 - Features start as MISSING, not DONE.
 - A feature row can move to DONE only with test/proof references.
@@ -50,6 +54,8 @@ This is the canonical product scope, status, proof, and completion contract for 
 | No-stubs policy | P0 | DONE | `docs/NO_STUBS_POLICY.md` committed |
 | Old-project audit boundary | P0 | DONE | `docs/OLD_PROJECTS_AUDIT.md` committed |
 | Roadmap | P0 | DONE | `docs/ROADMAP.md` committed |
+| 600-line file ceiling | P0 | DONE | README, AGENTS, and this audit define the rule |
+| Reference-first implementation rule | P0 | DONE | README, AGENTS, and this audit define the rule |
 
 ### 2. Rust workspace
 
@@ -107,8 +113,9 @@ This is the canonical product scope, status, proof, and completion contract for 
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Chat-first UI | P0 | MISSING | Basic conversation page | Screenshot |
+| ChatGPT-like chat UI | P0 | MISSING | Basic conversation page with familiar composer/messages/sidebar feel | Screenshot |
 | SSE streaming | P0 | MISSING | Token/tool/progress events | Browser proof |
+| OpenCode-like agentic coding loop | P0 | MISSING | Plan/tool/observe/verify loop for coding tasks | Ledger proof |
 | Visible model route cards | P0 | MISSING | Show selected model and fallback attempts | Browser proof |
 | Visible tool cards | P0 | MISSING | Running/succeeded/failed tool states | Browser proof |
 | Run proof panel | P0 | MISSING | Link ledger, screenshots, final verifier | Browser proof |
