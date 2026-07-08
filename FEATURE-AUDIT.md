@@ -66,7 +66,7 @@ This is the canonical product scope, status, proof, and completion contract for 
 | `crates/nim_router` | P0 | PARTIAL | CI result not observed; no live NIM call yet | Unit tests for failure classification and cooldowns |
 | `crates/model_contract` | P0 | PARTIAL | CI result not observed | Fixture tests for valid, malformed, empty responses |
 | `crates/agent_core` | P0 | PARTIAL | CI result not observed; no dry-run model loop yet | Unit tests and one dry-run session proof |
-| `crates/tools` | P0 | PARTIAL | Only path guard exists; file tools not implemented yet | Integration tests using temp repos |
+| `crates/tools` | P0 | PARTIAL | File tools and path guard exist; CI result not observed | Integration tests using temp repos |
 | `crates/proof` | P0 | PARTIAL | CI result not observed; no JSON export yet | JSON schema tests and proof fixture |
 | `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Browser proof screenshot tied to run ID |
 
@@ -99,10 +99,10 @@ This is the canonical product scope, status, proof, and completion contract for 
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| `read_file` | P0 | MISSING | Safe path-scoped file read | Temp repo test |
-| `write_file` | P0 | MISSING | Safe path-scoped file write with approval mode | Temp repo test |
-| `delete_file` | P0 | MISSING | Safe path-scoped delete with approval mode | Temp repo test |
-| `list_dir` | P0 | MISSING | Ignore `.git`, target, node_modules by default | Temp repo test |
+| `read_file` | P0 | PARTIAL | Implemented in `crates/tools`; CI result not observed | Temp repo test |
+| `write_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp repo test |
+| `delete_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp repo test |
+| `list_dir` | P0 | PARTIAL | Implemented in `crates/tools`; CI result not observed | Temp repo test |
 | `shell` | P0 | MISSING | Bounded command runner with timeout and allow/block policy | Integration test |
 | `git_status` | P0 | MISSING | Read-only git status | Temp repo test |
 | `git_diff` | P0 | MISSING | Read-only diff display | Temp repo test |
