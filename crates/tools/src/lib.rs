@@ -161,8 +161,9 @@ mod tests {
     fn list_dir_hides_build_and_git_dirs() {
         let root = temp_workspace();
         root.write_file("README.md", "readme").unwrap();
-        fs::create_dir_all(root.resolve_relative("target").unwrap_err_path()).ok();
-        fs::create_dir_all(root.resolve_relative("node_modules").unwrap_err_path()).ok();
+        fs::create_dir_all(root.root.join("target")).unwrap();
+        fs::create_dir_all(root.root.join("node_modules")).unwrap();
+        fs::create_dir_all(root.root.join(".git")).unwrap();
         let entries = root.list_dir(".").unwrap();
         assert_eq!(entries, vec!["README.md".to_string()]);
     }
@@ -192,18 +193,5 @@ mod tests {
     fn records_tool_kind() {
         let spec = ToolSpec::new("read_file", ToolKind::ReadOnly);
         assert_eq!(spec.kind, ToolKind::ReadOnly);
-    }
-
-    trait ErrPath {
-        fn unwrap_err_path(self) -> PathBuf;
-    }
-
-    impl ErrPath for Result<PathBuf, ToolError> {
-        fn unwrap_err_path(self) -> PathBuf {
-            match self {
-                Ok(path) => path,
-                Err(_) => PathBuf::new(),
-            }
-        }
     }
 }
