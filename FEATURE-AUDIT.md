@@ -54,43 +54,44 @@ This is the canonical product scope, status, proof, and completion contract for 
 | No-stubs policy | P0 | DONE | `docs/NO_STUBS_POLICY.md` committed |
 | Old-project audit boundary | P0 | DONE | `docs/OLD_PROJECTS_AUDIT.md` committed |
 | Roadmap | P0 | DONE | `docs/ROADMAP.md` committed |
-| 600-line file ceiling | P0 | DONE | README, AGENTS, and this audit define the rule |
+| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script |
 | Reference-first implementation rule | P0 | DONE | README, AGENTS, and this audit define the rule |
+| CI guardrails | P0 | PARTIAL | Workflow exists; latest Actions result not observed yet |
 
 ### 2. Rust workspace
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Workspace `Cargo.toml` | P0 | MISSING | Create minimal workspace | `cargo metadata` passes |
-| `crates/nim_router` | P0 | MISSING | Implement deterministic NIM route attempts | Unit tests for failure classification and cooldowns |
-| `crates/model_contract` | P0 | MISSING | Normalize NIM/OpenAI-compatible streaming and tool-call payloads | Fixture tests for valid, malformed, empty responses |
-| `crates/agent_core` | P0 | MISSING | State machine, objective ledger, max-turn guard, loop detector | Unit tests and one dry-run session proof |
-| `crates/tools` | P0 | MISSING | Filesystem/shell/git tools with safety gates | Integration tests using temp repos |
-| `crates/proof` | P0 | MISSING | Run ledger, tool ledger, screenshot/artifact references, claim verifier | JSON schema tests and proof fixture |
-| `apps/webui` | P0 | MISSING | Axum server + static chat UI + SSE events | Browser proof screenshot tied to run ID |
+| Workspace `Cargo.toml` | P0 | PARTIAL | CI result not observed | `cargo metadata` passes |
+| `crates/nim_router` | P0 | PARTIAL | CI result not observed; no live NIM call yet | Unit tests for failure classification and cooldowns |
+| `crates/model_contract` | P0 | PARTIAL | CI result not observed | Fixture tests for valid, malformed, empty responses |
+| `crates/agent_core` | P0 | PARTIAL | CI result not observed; no dry-run model loop yet | Unit tests and one dry-run session proof |
+| `crates/tools` | P0 | PARTIAL | Only path guard exists; file tools not implemented yet | Integration tests using temp repos |
+| `crates/proof` | P0 | PARTIAL | CI result not observed; no JSON export yet | JSON schema tests and proof fixture |
+| `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Browser proof screenshot tied to run ID |
 
 ### 3. NIM routing
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| NIM provider config | P0 | MISSING | Env/config loader for NIM base URL and API key | Redacted config test |
-| Deterministic model order | P0 | MISSING | Manual ordered list, no hidden mutation | Test proves order stable across runs |
-| Failure classification | P0 | MISSING | Distinguish provider/model/tool/runtime failures | Unit table tests |
-| Cooldowns | P0 | MISSING | Per-model cooldown for 429/5xx/timeouts | Time-controlled unit tests |
-| Route ledger | P0 | MISSING | Persist attempts, selected model, error reasons | Ledger fixture test |
-| Malformed tool-call repair | P1 | MISSING | One bounded repair turn before fallback | Fixture test with malformed JSON |
-| Required-tool correction | P1 | MISSING | One correction turn when tool call is required but missing | Fixture test |
+| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; CI/liveness not observed | Redacted config test |
+| Deterministic model order | P0 | PARTIAL | Config parser exists; CI not observed | Test proves order stable across runs |
+| Failure classification | P0 | PARTIAL | Provider/tool classification exists; CI not observed | Unit table tests |
+| Cooldowns | P0 | PARTIAL | Cooldown policy exists; CI not observed | Time-controlled unit tests |
+| Route ledger | P0 | MISSING | Route attempt type exists, but no persisted run ledger integration yet | Ledger fixture test |
+| Malformed tool-call repair | P1 | MISSING | Not implemented | Fixture test with malformed JSON |
+| Required-tool correction | P1 | MISSING | Contract can classify missing tool; correction loop not implemented | Fixture test |
 
 ### 4. Agent loop
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Session state machine | P0 | MISSING | States: queued, planning, model_turn, tool_turn, verifying, final, failed | State transition tests |
-| Objective ledger | P0 | MISSING | Track required objectives and phase completion | Fixture test |
+| Session state machine | P0 | PARTIAL | Minimal state machine exists; CI not observed | State transition tests |
+| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists; CI not observed | Fixture test |
 | Tool-call loop | P0 | MISSING | Execute validated tool calls and feed observations back | Dry-run proof |
 | Loop detector | P0 | MISSING | Detect repeated action/input/tool pattern | Unit tests |
-| Max turn / budget guard | P0 | MISSING | Stop safely with partial proof | Unit tests |
-| Final-claim verifier | P0 | MISSING | Compare final answer to ledger before claiming done | Fixture tests |
+| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists; CI not observed | Unit tests |
+| Final-claim verifier | P0 | PARTIAL | Required evidence verifier exists; no final-answer integration | Fixture tests |
 | Context compaction | P1 | MISSING | Summarize old turns without losing objective ledger | Long-run fixture |
 | Pause/stop/resume | P2 | MISSING | Real runtime cancellation, not fake controls | Browser/runtime proof |
 
