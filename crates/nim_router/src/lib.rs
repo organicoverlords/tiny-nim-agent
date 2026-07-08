@@ -3,7 +3,7 @@ use std::collections::HashMap;
 const DEFAULT_NIM_BASE_URL: &str = "https://integrate.api.nvidia.com/v1";
 const DEFAULT_NIM_MODEL: &str = "openai/gpt-oss-120b";
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct ModelId(String);
 
 impl ModelId {
