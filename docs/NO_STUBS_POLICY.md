@@ -10,7 +10,7 @@ This repository must not repeat that.
 
 ## Definition of a stub
 
-A stub is any code or UI that implies a feature works while the real behavior is missing, fake, bypassed, or unverified.
+A stub is any code or UI that implies a feature works while the real behavior is missing, fake, bypassed, oversized, or unverified.
 
 Examples:
 
@@ -21,7 +21,9 @@ Examples:
 - feature row says DONE without tests/proof,
 - proof file is generated without being tied to the actual run ID,
 - fallback silently changes providers/model order,
-- final answer claims success without verifier evidence.
+- final answer claims success without verifier evidence,
+- a file grows past 600 lines instead of being split,
+- a new custom subsystem is invented when a proven reference behavior should be copied.
 
 ## Allowed incomplete work
 
@@ -49,6 +51,20 @@ Do not commit a visible UI button unless either:
 1. the backend behavior exists and is tested, or
 2. the button is disabled and says the feature is not implemented.
 
+Do not commit any tracked file over 600 lines.
+
+## Reference-first rule
+
+Before creating a feature, name the existing product behavior being copied:
+
+- ChatGPT for chat UI feel,
+- OpenCode for agentic coding behavior,
+- LibreChat for chat/tool organization,
+- Hermes for agent-loop boundaries,
+- LocalGPT/Forge experiments only for isolated lessons.
+
+If no reference exists, write down why a new local design is needed before coding.
+
 ## Completion checklist for every feature
 
 A feature may move to DONE only if:
@@ -59,7 +75,8 @@ A feature may move to DONE only if:
 - failure paths are tested,
 - the feature is visible in the ledger if it affects agent runs,
 - `FEATURE-AUDIT.md` is updated,
-- no benchmark-specific shortcut was added.
+- no benchmark-specific shortcut was added,
+- all changed files are at or below 600 lines.
 
 ## Anti-cheat rules
 
@@ -74,13 +91,19 @@ The following are rejected even if tests pass:
 
 ## Review command suggestions
 
-Before a DONE claim, workers should search for placeholders:
+Before a DONE claim, workers should search for placeholders and oversized files:
 
 ```bash
 rg -n "todo!\(|unimplemented!\(|not implemented|stub|placeholder|fake|TODO|FIXME|HACK" . \
   -g '!target' \
   -g '!node_modules' \
   -g '!.git'
+
+find . -type f \
+  -not -path './.git/*' \
+  -not -path './target/*' \
+  -not -path './node_modules/*' \
+  -print0 | xargs -0 wc -l | sort -nr | head -20
 ```
 
 This search is not enough by itself, but it catches obvious mistakes.
