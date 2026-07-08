@@ -1,6 +1,6 @@
 # tiny-nim-agent
 
-Tiny Rust agentic coding app with NIM-only FreeLLMAPI-style routing, visible tool loops, and WebUI proof ledger.
+Tiny Rust agentic coding app with a ChatGPT-like WebUI, OpenCode-like coding-agent capabilities, NIM-only routing first, visible tool loops, and a proof ledger.
 
 This repository is a clean product reset. It is **not** a merge target for ForgeStack V4, LocalGPT, Superapp, ForgeMerge, GigStack, or `forge-unified`.
 
@@ -8,13 +8,22 @@ This repository is a clean product reset. It is **not** a merge target for Forge
 
 Build one small reliable agentic coding app that can:
 
-1. accept a natural-language coding task in the WebUI,
-2. plan the task,
+1. accept a natural-language coding task in a ChatGPT-style WebUI,
+2. plan and execute like a coding agent,
 3. call safe tools,
 4. write/read/delete files when explicitly allowed,
 5. run verification commands,
 6. keep a durable ledger of every model route, tool call, output, screenshot, and final claim,
 7. pass the six-phase benchmark through the normal WebUI path without benchmark-specific shortcuts.
+
+## Working principles
+
+- Copy proven product behavior first: ChatGPT for WebUI feel; OpenCode for agentic coding loop; LibreChat for chat/tool organization; Hermes for agent loop boundaries.
+- Do not invent big systems when a proven product already shows the correct behavior.
+- Implement behavior in small Rust modules; do not blindly import old app sprawl.
+- Keep docs and code minimal, neat, and grounded in working principles.
+- No file may exceed 600 lines. Target under 400 lines; split earlier.
+- No feature is added just by fixing the latest error. Understand the reference behavior, design the smallest equivalent, then test it.
 
 ## Non-negotiables
 
@@ -29,7 +38,7 @@ Build one small reliable agentic coding app that can:
 
 ## Documentation source of truth
 
-Read these before coding:
+Keep this small. Read these before coding:
 
 - [`FEATURE-AUDIT.md`](FEATURE-AUDIT.md) — canonical feature/proof contract.
 - [`AGENTS.md`](AGENTS.md) — rules for agents and workers.
