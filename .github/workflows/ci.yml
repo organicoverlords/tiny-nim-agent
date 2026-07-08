@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      NIM_KEY: ${{ secrets.NIM_KEY }}
+      NIM_BASE_URL: https://integrate.api.nvidia.com/v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check NIM secret presence without printing it
+        run: |
+          if [ -z "${NIM_KEY:-}" ]; then
+            echo "NIM_KEY GitHub secret is missing"
+            exit 1
+          fi
+          echo "NIM_KEY is configured"
+      - name: Cargo metadata
+        run: cargo metadata --format-version 1 --no-deps
+      - name: Cargo test
+        run: cargo test --workspace
+      - name: No placeholder product code
+        run: |
+          if grep -RInE 'todo!\(|unimplemented!\(|not implemented|placeholder|fake' \
+            --exclude-dir=.git --exclude-dir=target .; then
+            echo "Placeholder text found"
+            exit 1
+          fi
+      - name: Enforce 600-line file ceiling
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          blocked = []
+          for path in Path('.').rglob('*'):
+              if not path.is_file():
+                  continue
+              parts = set(path.parts)
+              if {'.git', 'target', 'node_modules'} & parts:
+                  continue
+              try:
+                  lines = path.read_text(encoding='utf-8').splitlines()
+              except UnicodeDecodeError:
+                  continue
+              if len(lines) > 600:
+                  blocked.append((str(path), len(lines)))
+          if blocked:
+              for name, count in blocked:
+                  print(f'{count:5d} {name}')
+              raise SystemExit('Files exceed 600-line ceiling')
+          print('All tracked text files are within the 600-line ceiling')
+          PY
