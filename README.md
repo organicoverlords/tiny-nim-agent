@@ -37,6 +37,7 @@ Read these before coding:
 - [`docs/NIM_ROUTING_AND_TOOL_LOOP.md`](docs/NIM_ROUTING_AND_TOOL_LOOP.md) — NIM failure classification and loop contract.
 - [`docs/NO_STUBS_POLICY.md`](docs/NO_STUBS_POLICY.md) — anti-placeholder rules.
 - [`docs/OLD_PROJECTS_AUDIT.md`](docs/OLD_PROJECTS_AUDIT.md) — why old projects are references only.
+- [`docs/SOURCE_REVIEW_LOG.md`](docs/SOURCE_REVIEW_LOG.md) — what source has actually been reviewed and what still requires targeted review.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — implementation slices in required order.
 
 ## Current state
