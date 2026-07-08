@@ -66,7 +66,7 @@ This is the canonical product scope, status, proof, and completion contract for 
 | `crates/nim_router` | P0 | PARTIAL | CI result not observed; no live NIM call yet | Unit tests for failure classification and cooldowns |
 | `crates/model_contract` | P0 | PARTIAL | CI result not observed | Fixture tests for valid, malformed, empty responses |
 | `crates/agent_core` | P0 | PARTIAL | CI result not observed; no dry-run model loop yet | Unit tests and one dry-run session proof |
-| `crates/tools` | P0 | PARTIAL | File tools and path guard exist; CI result not observed | Integration tests using temp repos |
+| `crates/tools` | P0 | PARTIAL | File and shell tools exist; CI result not observed | Integration tests using temp repos |
 | `crates/proof` | P0 | PARTIAL | CI result not observed; no JSON export yet | JSON schema tests and proof fixture |
 | `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Browser proof screenshot tied to run ID |
 
@@ -103,7 +103,7 @@ This is the canonical product scope, status, proof, and completion contract for 
 | `write_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp repo test |
 | `delete_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp repo test |
 | `list_dir` | P0 | PARTIAL | Implemented in `crates/tools`; CI result not observed | Temp repo test |
-| `shell` | P0 | MISSING | Bounded command runner with timeout and allow/block policy | Integration test |
+| `shell` | P0 | PARTIAL | Bounded runner exists; CI result not observed; policy still minimal | Integration test |
 | `git_status` | P0 | MISSING | Read-only git status | Temp repo test |
 | `git_diff` | P0 | MISSING | Read-only diff display | Temp repo test |
 | `git_commit` | P1 | MISSING | Explicit approval required | Integration test |
