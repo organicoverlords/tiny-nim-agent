@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 const DEFAULT_NIM_BASE_URL: &str = "https://integrate.api.nvidia.com/v1";
 const DEFAULT_NIM_MODEL: &str = "openai/gpt-oss-120b";
@@ -20,35 +21,47 @@ impl ModelId {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct RedactedSecret {
-    last_four: String,
-    len: usize,
+#[derive(Clone, Eq, PartialEq)]
+pub struct NimApiKey {
+    value: String,
 }
 
-impl RedactedSecret {
+impl NimApiKey {
     pub fn new(value: impl Into<String>) -> Result<Self, ConfigError> {
         let value = value.into();
         let trimmed = value.trim();
         if trimmed.is_empty() {
             return Err(ConfigError::MissingNimKey);
         }
-        let chars: Vec<char> = trimmed.chars().collect();
-        let start = chars.len().saturating_sub(4);
         Ok(Self {
-            last_four: chars[start..].iter().collect(),
-            len: chars.len(),
+            value: trimmed.to_string(),
         })
     }
 
-    pub fn display(&self) -> String {
-        format!("***{} ({} chars)", self.last_four, self.len)
+    pub fn redacted(&self) -> String {
+        let chars: Vec<char> = self.value.chars().collect();
+        let start = chars.len().saturating_sub(4);
+        let last_four: String = chars[start..].iter().collect();
+        format!("***{} ({} chars)", last_four, chars.len())
+    }
+
+    pub fn expose_for_http_client(&self) -> &str {
+        &self.value
+    }
+}
+
+impl fmt::Debug for NimApiKey {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("NimApiKey")
+            .field("redacted", &self.redacted())
+            .finish()
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NimConfig {
-    pub api_key: RedactedSecret,
+    pub api_key: NimApiKey,
     pub base_url: String,
     pub model_order: Vec<ModelId>,
 }
@@ -72,7 +85,7 @@ impl NimConfig {
         let api_key = values
             .get("NIM_KEY")
             .ok_or(ConfigError::MissingNimKey)
-            .and_then(|value| RedactedSecret::new(value.clone()))?;
+            .and_then(|value| NimApiKey::new(value.clone()))?;
 
         let base_url = values
             .get("NIM_BASE_URL")
@@ -255,7 +268,8 @@ mod tests {
         assert_eq!(config.base_url, DEFAULT_NIM_BASE_URL);
         assert_eq!(config.model_order[0].as_str(), "model-a");
         assert_eq!(config.model_order[1].as_str(), "model-b");
-        assert_eq!(config.api_key.display(), "***1234 (17 chars)");
+        assert_eq!(config.api_key.redacted(), "***1234 (17 chars)");
+        assert!(!format!("{:?}", config.api_key).contains("secret-value"));
     }
 
     #[test]
