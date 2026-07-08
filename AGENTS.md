@@ -18,9 +18,25 @@ Do not start feature work before reading those files.
 
 - This is a clean repository.
 - Do not merge old app branches into this repo.
-- Do not copy large modules from ForgeStack V4, LocalGPT, Superapp, ForgeMerge, GigStack, or `forge-unified` without a focused source review and a written extraction note.
-- External projects such as Agno, Hermes, OpenCode, and LibreChat are references for behavior and architecture only.
+- Keep docs and code minimal. Add a new document only when it prevents real confusion.
+- No tracked file may exceed 600 lines. Target under 400 lines and split earlier.
+- Do not copy large modules from ForgeStack V4, LocalGPT, Superapp, ForgeMerge, GigStack, or `forge-unified` without focused source review and a written extraction note.
+- Copy proven product behavior first: ChatGPT-style WebUI, OpenCode-style coding loop, LibreChat-style chat/tool organization, Hermes-style agent-loop boundaries.
+- Do not invent a new system when an existing product already demonstrates the behavior.
 - Keep the repo small. Prefer one complete path over many partial systems.
+
+## Reference-first implementation rule
+
+Before building a feature:
+
+1. Name the reference behavior being copied.
+2. Identify the smallest local version needed.
+3. Avoid broad framework/system invention.
+4. Implement the behavior in small Rust modules.
+5. Test the user-visible path.
+6. Update `FEATURE-AUDIT.md` only after proof exists.
+
+Do not add features by only fixing the latest error. Fixes must preserve the intended product behavior.
 
 ## No-stub rule
 
@@ -72,7 +88,8 @@ A task is done only when all are true:
 4. Proof or run ledger exists when the feature is runtime-visible.
 5. `FEATURE-AUDIT.md` status is updated.
 6. No new stubs or placeholder claims were introduced.
-7. Final answer cites exact commit(s), files changed, and proof command(s).
+7. Every changed tracked file is at or below 600 lines.
+8. Final answer cites exact commit(s), files changed, and proof command(s).
 
 ## NIM/tool-loop rule
 
