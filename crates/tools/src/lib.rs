@@ -1,5 +1,8 @@
 use std::fs;
 use std::path::{Component, Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::thread;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WorkspaceRoot {
@@ -62,6 +65,44 @@ impl WorkspaceRoot {
         entries.sort();
         Ok(entries)
     }
+
+    pub fn run_shell(&self, command: ShellCommand) -> Result<ShellResult, ToolError> {
+        if is_blocked_program(&command.program) {
+            return Err(ToolError::CommandBlocked);
+        }
+        let mut child = Command::new(&command.program)
+            .args(&command.args)
+            .current_dir(&self.root)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(ToolError::Io)?;
+
+        let start = Instant::now();
+        let timeout = Duration::from_millis(command.timeout_ms.max(1));
+        loop {
+            if child.try_wait().map_err(ToolError::Io)?.is_some() {
+                let output = child.wait_with_output().map_err(ToolError::Io)?;
+                return Ok(ShellResult {
+                    exit_code: output.status.code(),
+                    stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+                    stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+                    timed_out: false,
+                });
+            }
+            if start.elapsed() >= timeout {
+                child.kill().map_err(ToolError::Io)?;
+                let output = child.wait_with_output().map_err(ToolError::Io)?;
+                return Ok(ShellResult {
+                    exit_code: output.status.code(),
+                    stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+                    stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+                    timed_out: true,
+                });
+            }
+            thread::sleep(Duration::from_millis(5));
+        }
+    }
 }
 
 fn is_protected(path: &Path) -> bool {
@@ -78,12 +119,17 @@ fn is_hidden_or_build_dir(name: &str) -> bool {
     matches!(name, ".git" | "target" | "node_modules")
 }
 
+fn is_blocked_program(program: &str) -> bool {
+    matches!(program, "rm" | "del" | "format" | "shutdown" | "reboot")
+}
+
 #[derive(Debug)]
 pub enum ToolError {
     EmptyWorkspaceRoot,
     AbsolutePathBlocked,
     ParentTraversalBlocked,
     ProtectedPathBlocked,
+    CommandBlocked,
     Io(std::io::Error),
 }
 
@@ -95,12 +141,38 @@ impl PartialEq for ToolError {
                 | (Self::AbsolutePathBlocked, Self::AbsolutePathBlocked)
                 | (Self::ParentTraversalBlocked, Self::ParentTraversalBlocked)
                 | (Self::ProtectedPathBlocked, Self::ProtectedPathBlocked)
+                | (Self::CommandBlocked, Self::CommandBlocked)
                 | (Self::Io(_), Self::Io(_))
         )
     }
 }
 
 impl Eq for ToolError {}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ShellCommand {
+    pub program: String,
+    pub args: Vec<String>,
+    pub timeout_ms: u64,
+}
+
+impl ShellCommand {
+    pub fn new(program: impl Into<String>, args: Vec<String>, timeout_ms: u64) -> Self {
+        Self {
+            program: program.into(),
+            args,
+            timeout_ms,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ShellResult {
+    pub exit_code: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+    pub timed_out: bool,
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ToolKind {
@@ -166,6 +238,41 @@ mod tests {
         fs::create_dir_all(root.root.join(".git")).unwrap();
         let entries = root.list_dir(".").unwrap();
         assert_eq!(entries, vec!["README.md".to_string()]);
+    }
+
+    #[test]
+    fn shell_command_returns_output() {
+        let root = temp_workspace();
+        let result = root
+            .run_shell(ShellCommand::new(
+                "sh",
+                vec!["-c".to_string(), "printf hello".to_string()],
+                1_000,
+            ))
+            .unwrap();
+        assert_eq!(result.stdout, "hello");
+        assert_eq!(result.exit_code, Some(0));
+        assert!(!result.timed_out);
+    }
+
+    #[test]
+    fn shell_command_times_out() {
+        let root = temp_workspace();
+        let result = root
+            .run_shell(ShellCommand::new(
+                "sh",
+                vec!["-c".to_string(), "sleep 2".to_string()],
+                10,
+            ))
+            .unwrap();
+        assert!(result.timed_out);
+    }
+
+    #[test]
+    fn shell_blocks_obvious_destructive_programs() {
+        let root = temp_workspace();
+        let err = root.run_shell(ShellCommand::new("rm", vec![], 100)).unwrap_err();
+        assert_eq!(err, ToolError::CommandBlocked);
     }
 
     #[test]
