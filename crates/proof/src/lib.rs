@@ -52,6 +52,10 @@ impl RunLedger {
         ledger
     }
 
+    pub fn run_id(&self) -> &RunId {
+        &self.run_id
+    }
+
     pub fn push(&mut self, event: ProofEvent) {
         if event.run_id() == &self.run_id {
             self.events.push(event);
@@ -96,6 +100,13 @@ mod tests {
     #[test]
     fn run_id_cannot_be_empty() {
         assert_eq!(RunId::new(" ").unwrap_err(), ProofError::EmptyRunId);
+    }
+
+    #[test]
+    fn ledger_exposes_run_id() {
+        let run_id = RunId::new("run-1").unwrap();
+        let ledger = RunLedger::new(run_id.clone());
+        assert_eq!(ledger.run_id(), &run_id);
     }
 
     #[test]
