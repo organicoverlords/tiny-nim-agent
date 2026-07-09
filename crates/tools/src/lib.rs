@@ -1,3 +1,6 @@
+pub mod git;
+pub use git::{git_diff, git_status, GitOutput};
+
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -16,6 +19,10 @@ impl WorkspaceRoot {
             return Err(ToolError::EmptyWorkspaceRoot);
         }
         Ok(Self { root })
+    }
+
+    pub fn root_path(&self) -> &Path {
+        &self.root
     }
 
     pub fn resolve_relative(&self, path: impl AsRef<Path>) -> Result<PathBuf, ToolError> {
@@ -209,6 +216,12 @@ mod tests {
         let root = std::env::temp_dir().join(format!("tiny-tools-{nonce}"));
         fs::create_dir_all(&root).unwrap();
         WorkspaceRoot::new(root).unwrap()
+    }
+
+    #[test]
+    fn exposes_root_path_for_read_only_subtools() {
+        let root = WorkspaceRoot::new("/repo").unwrap();
+        assert_eq!(root.root_path(), Path::new("/repo"));
     }
 
     #[test]
