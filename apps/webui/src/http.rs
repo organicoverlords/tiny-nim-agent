@@ -1,3 +1,4 @@
+use crate::smoke_events::{smoke_cards_html, smoke_event_stream};
 use crate::{run_smoke_for_workspace, SmokeRunResponse};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -33,9 +34,14 @@ fn route(request_line: &str, workspace: &Path) -> HttpResponse {
         .unwrap_or("/");
     match path {
         "/" => html_response(index_html()),
+        "/smoke/cards" => smoke_cards_response(workspace),
         "/api/smoke/dry-run" => match run_smoke_for_workspace(workspace) {
             Ok(response) => json_response(200, smoke_json(&response)),
-            Err(error) => json_response(500, format!("{{\"ok\":false,\"error\":\"{}\"}}", escape_json(&format!("{error:?}")))),
+            Err(error) => error_json(error),
+        },
+        "/api/smoke/events" => match run_smoke_for_workspace(workspace) {
+            Ok(response) => event_response(smoke_event_stream(&response)),
+            Err(error) => error_event(error),
         },
         _ => text_response(404, "not found"),
     }
@@ -55,6 +61,13 @@ fn respond(mut stream: TcpStream, workspace: &Path) -> std::io::Result<()> {
         response.body
     );
     stream.write_all(wire.as_bytes())
+}
+
+fn smoke_cards_response(workspace: &Path) -> HttpResponse {
+    match run_smoke_for_workspace(workspace) {
+        Ok(response) => html_response(page_shell(&smoke_cards_html(&response))),
+        Err(error) => html_response(page_shell(&format!("<pre>{}</pre>", escape_json(&format!("{error:?}"))))),
+    }
 }
 
 fn smoke_json(response: &SmokeRunResponse) -> String {
@@ -87,28 +100,49 @@ fn smoke_json(response: &SmokeRunResponse) -> String {
 }
 
 fn index_html() -> String {
-    r#"<!doctype html>
-<html>
-<head><meta charset="utf-8"><title>tiny-nim-agent</title></head>
-<body>
-<main>
+    page_shell(
+        r#"<section class="chat-shell">
   <h1>tiny-nim-agent</h1>
-  <p>Dry-run smoke calls the real agent loop and returns proof data.</p>
+  <p>Run the real smoke path and inspect proof as JSON, cards, or events.</p>
   <button id="run">Run smoke</button>
+  <p><a href="/smoke/cards">Open smoke tool cards</a></p>
   <pre id="out">idle</pre>
-</main>
+</section>
 <script>
 document.getElementById('run').onclick = async () => {
   const res = await fetch('/api/smoke/dry-run', { method: 'POST' });
   document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
 };
-</script>
-</body>
-</html>"#.to_string()
+</script>"#,
+    )
+}
+
+fn page_shell(body: &str) -> String {
+    format!(
+        r#"<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>tiny-nim-agent</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; max-width: 860px; margin: 40px auto; background: #111; color: #eee; }}
+    a {{ color: #8ab4ff; }}
+    button {{ padding: 10px 14px; border-radius: 10px; }}
+    pre, .run-card {{ background: #1d1d1d; border: 1px solid #333; border-radius: 14px; padding: 16px; }}
+    .tool-card {{ display: flex; justify-content: space-between; margin: 8px 0; padding: 10px; background: #242424; border-radius: 10px; }}
+  </style>
+</head>
+<body>{body}</body>
+</html>"#
+    )
 }
 
 fn json_response(status: u16, body: String) -> HttpResponse {
     HttpResponse { status, content_type: "application/json", body }
+}
+
+fn event_response(body: String) -> HttpResponse {
+    HttpResponse { status: 200, content_type: "text/event-stream", body }
 }
 
 fn html_response(body: String) -> HttpResponse {
@@ -117,6 +151,14 @@ fn html_response(body: String) -> HttpResponse {
 
 fn text_response(status: u16, body: &str) -> HttpResponse {
     HttpResponse { status, content_type: "text/plain; charset=utf-8", body: body.to_string() }
+}
+
+fn error_json(error: crate::WebUiError) -> HttpResponse {
+    json_response(500, format!("{{\"ok\":false,\"error\":{}}}", quoted(&format!("{error:?}"))))
+}
+
+fn error_event(error: crate::WebUiError) -> HttpResponse {
+    event_response(format!("event: error\ndata: {}\n\n", escape_json(&format!("{error:?}"))))
 }
 
 fn quoted(value: &str) -> String {
@@ -152,6 +194,7 @@ mod tests {
         assert_eq!(response.status, 200);
         assert!(response.body.contains("Run smoke"));
         assert!(response.body.contains("/api/smoke/dry-run"));
+        assert!(response.body.contains("/smoke/cards"));
     }
 
     #[test]
@@ -163,6 +206,26 @@ mod tests {
         assert!(response.body.contains("\"state\":\"final\""));
         assert!(response.body.contains("file_written"));
         assert!(response.body.contains("git_status_checked"));
+        assert!(!root.join("agent-smoke.txt").exists());
+    }
+
+    #[test]
+    fn smoke_events_endpoint_returns_event_stream() {
+        let root = git_workspace();
+        let response = handle_request_line("GET /api/smoke/events HTTP/1.1", &root);
+        assert_eq!(response.status, 200);
+        assert_eq!(response.content_type, "text/event-stream");
+        assert!(response.body.contains("event: tool_result"));
+        assert!(response.body.contains("event: final_state"));
+    }
+
+    #[test]
+    fn smoke_cards_page_renders_tool_cards() {
+        let root = git_workspace();
+        let response = handle_request_line("GET /smoke/cards HTTP/1.1", &root);
+        assert_eq!(response.status, 200);
+        assert!(response.body.contains("class=\"tool-card\""));
+        assert!(response.body.contains("git_status"));
         assert!(!root.join("agent-smoke.txt").exists());
     }
 }
