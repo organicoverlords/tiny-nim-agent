@@ -56,7 +56,7 @@ This is the canonical product scope, status, proof, and completion contract for 
 | Roadmap | P0 | DONE | `docs/ROADMAP.md` committed |
 | 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script |
 | Reference-first implementation rule | P0 | DONE | README, AGENTS, and this audit define the rule |
-| CI guardrails | P0 | PARTIAL | Workflow exists; latest Actions result not observed yet |
+| CI guardrails | P0 | PARTIAL | Workflow fixed; Actions event/status still not observed |
 
 ### 2. Rust workspace
 
