@@ -7,7 +7,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+tiny-model-contract = { path = "../model_contract" }
 tiny-proof = { path = "../proof" }
+tiny-tools = { path = "../tools" }
 
 [lib]
 name = "tiny_agent_core"
