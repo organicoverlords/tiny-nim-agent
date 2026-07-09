@@ -1,0 +1,47 @@
+name: Browser Smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  browser-smoke:
+    name: Browser proof smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright browser
+        run: npx playwright@1.46.1 install --with-deps chromium
+      - name: Build webui
+        run: cargo build -p tiny-webui
+      - name: Prepare proof workspace
+        run: |
+          mkdir -p /tmp/tiny-nim-agent-browser-workspace
+          git -C /tmp/tiny-nim-agent-browser-workspace init
+      - name: Start webui server
+        run: |
+          target/debug/tiny-webui /tmp/tiny-nim-agent-browser-workspace > /tmp/tiny-webui.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/tiny-webui.log
+          exit 1
+      - name: Run browser smoke proof
+        run: npx -p playwright@1.46.1 node scripts/browser_smoke.mjs
+      - name: Upload browser proof artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-proof
+          path: |
+            browser-proof/browser-proof.png
+            browser-proof/browser-proof.json
+            /tmp/tiny-nim-agent-browser-workspace/.tiny-nim-agent/proofs/dry-run-first-smoke.json
