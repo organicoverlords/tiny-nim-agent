@@ -1,4 +1,5 @@
 use crate::smoke_events::{smoke_cards_html, smoke_event_stream};
+use crate::smoke_report::{smoke_ledger_json, smoke_report_html};
 use crate::{run_smoke_for_workspace, SmokeRunResponse};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -34,11 +35,10 @@ fn route(request_line: &str, workspace: &Path) -> HttpResponse {
         .unwrap_or("/");
     match path {
         "/" => html_response(index_html()),
-        "/smoke/cards" => smoke_cards_response(workspace),
-        "/api/smoke/dry-run" => match run_smoke_for_workspace(workspace) {
-            Ok(response) => json_response(200, smoke_json(&response)),
-            Err(error) => error_json(error),
-        },
+        "/smoke/cards" => smoke_html(workspace, smoke_cards_html),
+        "/smoke/report" => smoke_html(workspace, smoke_report_html),
+        "/api/smoke/dry-run" => smoke_json_route(workspace, smoke_json),
+        "/api/smoke/ledger" => smoke_json_route(workspace, smoke_ledger_json),
         "/api/smoke/events" => match run_smoke_for_workspace(workspace) {
             Ok(response) => event_response(smoke_event_stream(&response)),
             Err(error) => error_event(error),
@@ -63,10 +63,17 @@ fn respond(mut stream: TcpStream, workspace: &Path) -> std::io::Result<()> {
     stream.write_all(wire.as_bytes())
 }
 
-fn smoke_cards_response(workspace: &Path) -> HttpResponse {
+fn smoke_html(workspace: &Path, render: fn(&SmokeRunResponse) -> String) -> HttpResponse {
     match run_smoke_for_workspace(workspace) {
-        Ok(response) => html_response(page_shell(&smoke_cards_html(&response))),
+        Ok(response) => html_response(page_shell(&render(&response))),
         Err(error) => html_response(page_shell(&format!("<pre>{}</pre>", escape_json(&format!("{error:?}"))))),
+    }
+}
+
+fn smoke_json_route(workspace: &Path, render: fn(&SmokeRunResponse) -> String) -> HttpResponse {
+    match run_smoke_for_workspace(workspace) {
+        Ok(response) => json_response(200, render(&response)),
+        Err(error) => error_json(error),
     }
 }
 
@@ -103,14 +110,15 @@ fn index_html() -> String {
     page_shell(
         r#"<section class="chat-shell">
   <h1>tiny-nim-agent</h1>
-  <p>Run the real smoke path and inspect proof as JSON, cards, or events.</p>
+  <p>Run the real smoke path and inspect proof as JSON, ledger, cards, report, or events.</p>
   <button id="run">Run smoke</button>
   <p><a href="/smoke/cards">Open smoke tool cards</a></p>
+  <p><a href="/smoke/report">Open verified smoke report</a></p>
   <pre id="out">idle</pre>
 </section>
 <script>
 document.getElementById('run').onclick = async () => {
-  const res = await fetch('/api/smoke/dry-run', { method: 'POST' });
+  const res = await fetch('/api/smoke/ledger', { method: 'POST' });
   document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
 };
 </script>"#,
@@ -193,8 +201,9 @@ mod tests {
         let response = handle_request_line("GET / HTTP/1.1", Path::new("."));
         assert_eq!(response.status, 200);
         assert!(response.body.contains("Run smoke"));
-        assert!(response.body.contains("/api/smoke/dry-run"));
+        assert!(response.body.contains("/api/smoke/ledger"));
         assert!(response.body.contains("/smoke/cards"));
+        assert!(response.body.contains("/smoke/report"));
     }
 
     #[test]
@@ -207,6 +216,27 @@ mod tests {
         assert!(response.body.contains("file_written"));
         assert!(response.body.contains("git_status_checked"));
         assert!(!root.join("agent-smoke.txt").exists());
+    }
+
+    #[test]
+    fn smoke_ledger_route_returns_verified_final_answer() {
+        let root = git_workspace();
+        let response = handle_request_line("POST /api/smoke/ledger HTTP/1.1", &root);
+        assert_eq!(response.status, 200);
+        assert!(response.body.contains("\"verified\":true"));
+        assert!(response.body.contains("\"final_answer\""));
+        assert!(response.body.contains("created agent-smoke.txt"));
+        assert!(!root.join("agent-smoke.txt").exists());
+    }
+
+    #[test]
+    fn smoke_report_page_renders_verified_report() {
+        let root = git_workspace();
+        let response = handle_request_line("GET /smoke/report HTTP/1.1", &root);
+        assert_eq!(response.status, 200);
+        assert!(response.body.contains("Final report"));
+        assert!(response.body.contains("Verified"));
+        assert!(response.body.contains("agent-smoke.txt"));
     }
 
     #[test]
