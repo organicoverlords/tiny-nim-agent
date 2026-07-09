@@ -1,4 +1,6 @@
-use tiny_proof::{verify_required_evidence, ProofError, RunId, RunLedger};
+use tiny_model_contract::ToolCall;
+use tiny_proof::{verify_required_evidence, ProofError, ProofEvent, RunId, RunLedger};
+use tiny_tools::{ToolError, WorkspaceRoot};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SessionState {
@@ -97,6 +99,28 @@ impl Session {
         Ok(())
     }
 
+    pub fn execute_tool_call(
+        &mut self,
+        workspace: &WorkspaceRoot,
+        call: &ToolCall,
+    ) -> Result<String, AgentError> {
+        self.advance(SessionState::ToolTurn)?;
+        let run_id = self.ledger.run_id().clone();
+        let outcome = execute_workspace_tool(workspace, call);
+        self.ledger.push(ProofEvent::ToolResult {
+            run_id: run_id.clone(),
+            tool: call.name.clone(),
+            ok: outcome.is_ok(),
+        });
+        if outcome.is_ok() {
+            self.ledger.push(ProofEvent::Evidence {
+                run_id,
+                key: evidence_key(&call.name).to_string(),
+            });
+        }
+        outcome
+    }
+
     pub fn verify_objective(&mut self, id: &str) -> Result<(), AgentError> {
         let required = self
             .plan
@@ -123,19 +147,75 @@ impl Session {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+fn execute_workspace_tool(workspace: &WorkspaceRoot, call: &ToolCall) -> Result<String, AgentError> {
+    match call.name.as_str() {
+        "read_file" => {
+            let path = json_arg(&call.args_json, "path")?;
+            workspace.read_file(path).map_err(AgentError::Tool)
+        }
+        "write_file" => {
+            let path = json_arg(&call.args_json, "path")?;
+            let content = json_arg(&call.args_json, "content")?;
+            workspace.write_file(path, &content).map_err(AgentError::Tool)?;
+            Ok(String::new())
+        }
+        "delete_file" => {
+            let path = json_arg(&call.args_json, "path")?;
+            workspace.delete_file(path).map_err(AgentError::Tool)?;
+            Ok(String::new())
+        }
+        "list_dir" => {
+            let path = json_arg(&call.args_json, "path")?;
+            workspace
+                .list_dir(path)
+                .map(|entries| entries.join("\n"))
+                .map_err(AgentError::Tool)
+        }
+        other => Err(AgentError::UnknownTool { name: other.to_string() }),
+    }
+}
+
+fn evidence_key(tool_name: &str) -> &str {
+    match tool_name {
+        "read_file" => "file_read",
+        "write_file" => "file_written",
+        "delete_file" => "file_deleted",
+        "list_dir" => "dir_listed",
+        _ => "tool_completed",
+    }
+}
+
+fn json_arg(json: &str, key: &str) -> Result<String, AgentError> {
+    let needle = format!("\"{}\"", key);
+    let start = json.find(&needle).ok_or_else(|| AgentError::MissingArg { key: key.into() })?;
+    let after_key = &json[start + needle.len()..];
+    let colon = after_key.find(':').ok_or_else(|| AgentError::MissingArg { key: key.into() })?;
+    let after_colon = after_key[colon + 1..].trim_start();
+    let value = after_colon
+        .strip_prefix('"')
+        .ok_or_else(|| AgentError::MissingArg { key: key.into() })?;
+    let end = value.find('"').ok_or_else(|| AgentError::MissingArg { key: key.into() })?;
+    Ok(value[..end].to_string())
+}
+
+#[derive(Debug, Eq, PartialEq)]
 pub enum AgentError {
     NoObjectives,
     ZeroTurnBudget,
     TurnBudgetExceeded,
     UnknownObjective { id: String },
+    UnknownTool { name: String },
+    MissingArg { key: String },
     OpenObjectivesRemain,
     Proof(ProofError),
+    Tool(ToolError),
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
     use tiny_proof::ProofEvent;
 
     fn session() -> Session {
@@ -145,7 +225,17 @@ mod tests {
             vec!["file_written".to_string()],
         )])
         .unwrap();
-        Session::new(run_id, plan, 3).unwrap()
+        Session::new(run_id, plan, 6).unwrap()
+    }
+
+    fn workspace() -> WorkspaceRoot {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("tiny-agent-core-{nonce}"));
+        fs::create_dir_all(&root).unwrap();
+        WorkspaceRoot::new(root).unwrap()
     }
 
     #[test]
@@ -161,9 +251,50 @@ mod tests {
     }
 
     #[test]
+    fn executes_write_read_delete_tool_calls_with_evidence() {
+        let mut session = session();
+        let workspace = workspace();
+        session
+            .execute_tool_call(
+                &workspace,
+                &ToolCall {
+                    name: "write_file".to_string(),
+                    args_json: "{\"path\":\"agent-smoke.txt\",\"content\":\"ok\"}".to_string(),
+                },
+            )
+            .unwrap();
+        let read_back = session
+            .execute_tool_call(
+                &workspace,
+                &ToolCall {
+                    name: "read_file".to_string(),
+                    args_json: "{\"path\":\"agent-smoke.txt\"}".to_string(),
+                },
+            )
+            .unwrap();
+        session
+            .execute_tool_call(
+                &workspace,
+                &ToolCall {
+                    name: "delete_file".to_string(),
+                    args_json: "{\"path\":\"agent-smoke.txt\"}".to_string(),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(read_back, "ok");
+        assert!(session.ledger.has_evidence("file_written"));
+        assert!(session.ledger.has_evidence("file_read"));
+        assert!(session.ledger.has_evidence("file_deleted"));
+    }
+
+    #[test]
     fn session_fails_when_turn_budget_is_exceeded() {
         let mut session = session();
         session.advance(SessionState::Planning).unwrap();
+        session.advance(SessionState::ModelTurn).unwrap();
+        session.advance(SessionState::ToolTurn).unwrap();
+        session.advance(SessionState::Verifying).unwrap();
         session.advance(SessionState::ModelTurn).unwrap();
         session.advance(SessionState::ToolTurn).unwrap();
         let err = session.advance(SessionState::Verifying).unwrap_err();
