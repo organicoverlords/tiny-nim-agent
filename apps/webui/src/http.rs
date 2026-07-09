@@ -1,3 +1,4 @@
+use crate::smoke_artifact::{artifact_response_json, write_smoke_proof_artifact};
 use crate::smoke_events::{smoke_cards_html, smoke_event_stream};
 use crate::smoke_report::{smoke_ledger_json, smoke_report_html};
 use crate::{run_smoke_for_workspace, SmokeRunResponse};
@@ -39,6 +40,7 @@ fn route(request_line: &str, workspace: &Path) -> HttpResponse {
         "/smoke/report" => smoke_html(workspace, smoke_report_html),
         "/api/smoke/dry-run" => smoke_json_route(workspace, smoke_json),
         "/api/smoke/ledger" => smoke_json_route(workspace, smoke_ledger_json),
+        "/api/smoke/proof-file" => smoke_proof_file_route(workspace),
         "/api/smoke/events" => match run_smoke_for_workspace(workspace) {
             Ok(response) => event_response(smoke_event_stream(&response)),
             Err(error) => error_event(error),
@@ -77,6 +79,16 @@ fn smoke_json_route(workspace: &Path, render: fn(&SmokeRunResponse) -> String) -
     }
 }
 
+fn smoke_proof_file_route(workspace: &Path) -> HttpResponse {
+    match run_smoke_for_workspace(workspace) {
+        Ok(response) => match write_smoke_proof_artifact(workspace, &response) {
+            Ok(artifact) => json_response(200, artifact_response_json(&artifact)),
+            Err(error) => json_response(500, format!("{{\"ok\":false,\"error\":{}}}", quoted(&format!("{error:?}")))),
+        },
+        Err(error) => error_json(error),
+    }
+}
+
 fn smoke_json(response: &SmokeRunResponse) -> String {
     let evidence = response
         .evidence
@@ -110,8 +122,9 @@ fn index_html() -> String {
     page_shell(
         r#"<section class="chat-shell">
   <h1>tiny-nim-agent</h1>
-  <p>Run the real smoke path and inspect proof as JSON, ledger, cards, report, or events.</p>
+  <p>Run the real smoke path and inspect proof as JSON, ledger, proof file, cards, report, or events.</p>
   <button id="run">Run smoke</button>
+  <button id="proof">Write proof file</button>
   <p><a href="/smoke/cards">Open smoke tool cards</a></p>
   <p><a href="/smoke/report">Open verified smoke report</a></p>
   <pre id="out">idle</pre>
@@ -119,6 +132,10 @@ fn index_html() -> String {
 <script>
 document.getElementById('run').onclick = async () => {
   const res = await fetch('/api/smoke/ledger', { method: 'POST' });
+  document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+};
+document.getElementById('proof').onclick = async () => {
+  const res = await fetch('/api/smoke/proof-file', { method: 'POST' });
   document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
 };
 </script>"#,
@@ -202,6 +219,7 @@ mod tests {
         assert_eq!(response.status, 200);
         assert!(response.body.contains("Run smoke"));
         assert!(response.body.contains("/api/smoke/ledger"));
+        assert!(response.body.contains("/api/smoke/proof-file"));
         assert!(response.body.contains("/smoke/cards"));
         assert!(response.body.contains("/smoke/report"));
     }
@@ -226,6 +244,21 @@ mod tests {
         assert!(response.body.contains("\"verified\":true"));
         assert!(response.body.contains("\"final_answer\""));
         assert!(response.body.contains("created agent-smoke.txt"));
+        assert!(!root.join("agent-smoke.txt").exists());
+    }
+
+    #[test]
+    fn smoke_proof_file_route_writes_run_artifact() {
+        let root = git_workspace();
+        let response = handle_request_line("POST /api/smoke/proof-file HTTP/1.1", &root);
+        let path = root.join(".tiny-nim-agent/proofs/dry-run-first-smoke.json");
+        let proof = fs::read_to_string(path).unwrap();
+
+        assert_eq!(response.status, 200);
+        assert!(response.body.contains("\"proof_path\""));
+        assert!(response.body.contains("\"proof_json\""));
+        assert!(proof.contains("\"verified\":true"));
+        assert!(proof.contains("\"run_id\":\"dry-run-first-smoke\""));
         assert!(!root.join("agent-smoke.txt").exists());
     }
 
