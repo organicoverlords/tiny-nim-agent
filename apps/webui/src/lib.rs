@@ -1,4 +1,5 @@
 pub mod http;
+pub mod smoke_artifact;
 pub mod smoke_events;
 pub mod smoke_report;
 

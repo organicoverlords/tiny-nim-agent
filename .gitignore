@@ -5,3 +5,4 @@
 !.env.example
 .DS_Store
 node_modules/
+.tiny-nim-agent/
