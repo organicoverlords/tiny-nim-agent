@@ -48,6 +48,12 @@ PR #2 proved Actions event delivery and Rust guardrails:
 - CI run `28987144205`: `Rust workspace and guardrails` succeeded.
 - CI run `28987144205`: `NIM secret preflight` succeeded.
 
+PR #4 proved the first dry-run agent foundation:
+
+- Actions Smoke run `28987457257`: `Actions event smoke` succeeded.
+- CI run `28987457255`: `NIM secret preflight` succeeded.
+- CI run `28987457255`: `Rust workspace and guardrails` succeeded.
+
 The Rust job passed:
 
 - `cargo metadata --format-version 1 --no-deps`
@@ -69,27 +75,27 @@ The Rust job passed:
 | No-stubs policy | P0 | DONE | `docs/NO_STUBS_POLICY.md` committed |
 | Old-project audit boundary | P0 | DONE | `docs/OLD_PROJECTS_AUDIT.md` committed |
 | Roadmap | P0 | DONE | `docs/ROADMAP.md` committed |
-| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script, PR #2 CI proof |
+| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script, PR #2/PR #4 CI proof |
 | Reference-first implementation rule | P0 | DONE | README, AGENTS, and this audit define the rule |
-| CI guardrails | P0 | DONE | PR #2: CI run `28987144205` and smoke run `28987144229` |
+| CI guardrails | P0 | DONE | PR #2 and PR #4 CI proof |
 
 ### 2. Rust workspace
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
 | Workspace `Cargo.toml` | P0 | DONE | None for workspace scaffold | PR #2 `cargo metadata` success |
-| `crates/nim_router` | P0 | PARTIAL | No live NIM call yet | Unit tests for failure classification and cooldowns passed in PR #2 |
-| `crates/model_contract` | P0 | PARTIAL | Streaming normalization still minimal | Contract tests passed in PR #2 |
-| `crates/agent_core` | P0 | PARTIAL | Tool dispatcher exists; no model loop yet | Unit tests and dry-run tool evidence test passed in PR #2 |
-| `crates/tools` | P0 | PARTIAL | File, shell, and git-read tools exist; approval policy still minimal | Integration-style temp workspace tests passed in PR #2 |
-| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | Unit tests passed in PR #2 |
-| `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Unit test passed in PR #2 |
+| `crates/nim_router` | P0 | PARTIAL | No live NIM call yet | Unit tests for failure classification and cooldowns passed in PR #2/PR #4 |
+| `crates/model_contract` | P0 | PARTIAL | Streaming normalization still minimal | Contract tests passed in PR #2/PR #4 |
+| `crates/agent_core` | P0 | PARTIAL | Dry-run smoke session exists; no model loop yet | PR #4 dry-run tests passed |
+| `crates/tools` | P0 | PARTIAL | File, shell, and git-read tools exist; approval policy still minimal | Integration-style temp workspace tests passed in PR #2/PR #4 |
+| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | Unit tests passed in PR #2/PR #4 |
+| `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Unit test passed in PR #2/PR #4 |
 
 ### 3. NIM routing
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; no live NIM request yet | Redacted config test passed in PR #2 |
+| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; no live NIM request yet | Redacted config test passed in PR #2/PR #4 |
 | Deterministic model order | P0 | PARTIAL | Config parser exists; live route not wired | Test proves order stable across runs |
 | Failure classification | P0 | PARTIAL | Provider/tool classification exists; no live route ledger yet | Unit table tests |
 | Cooldowns | P0 | PARTIAL | Cooldown policy exists; no persisted route ledger yet | Time-controlled unit tests |
@@ -101,12 +107,13 @@ The Rust job passed:
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Session state machine | P0 | PARTIAL | Minimal state machine exists; no model loop yet | State transition tests passed in PR #2 |
-| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists | Fixture test passed in PR #2 |
-| Tool-call loop | P0 | PARTIAL | Validated file-tool calls execute and write proof evidence; no model loop yet | Dry-run proof test passed in PR #2 |
+| Session state machine | P0 | PARTIAL | Minimal state machine exists; no model loop yet | State transition tests passed in PR #2/PR #4 |
+| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists | Fixture test passed in PR #2/PR #4 |
+| Tool-call loop | P0 | PARTIAL | Dry-run file/git tool calls execute and write proof evidence; no model loop yet | PR #4 dry-run smoke test passed |
 | Loop detector | P0 | MISSING | Detect repeated action/input/tool pattern | Unit tests |
-| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists | Unit tests passed in PR #2 |
-| Final-claim verifier | P0 | PARTIAL | Required evidence verifier exists; no final-answer integration | Fixture tests passed in PR #2 |
+| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists | Unit tests passed in PR #2/PR #4 |
+| Final-claim verifier | P0 | PARTIAL | Required evidence verifier finalizes dry-run session; no natural final-answer integration | PR #4 dry-run smoke test passed |
+| First local smoke session | P0 | PARTIAL | Dry-run helper exists; not exposed through WebUI/NIM yet | PR #4 `run_first_smoke_dry_run` test passed |
 | Context compaction | P1 | MISSING | Summarize old turns without losing objective ledger | Long-run fixture |
 | Pause/stop/resume | P2 | MISSING | Real runtime cancellation, not fake controls | Browser/runtime proof |
 
@@ -114,13 +121,13 @@ The Rust job passed:
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| `read_file` | P0 | PARTIAL | Implemented in `crates/tools`; not wired to WebUI/model loop | Temp workspace test passed in PR #2 |
-| `write_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp workspace test passed in PR #2 |
-| `delete_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp workspace test passed in PR #2 |
-| `list_dir` | P0 | PARTIAL | Implemented in `crates/tools`; not wired to WebUI/model loop | Temp workspace test passed in PR #2 |
-| `shell` | P0 | PARTIAL | Bounded runner exists; policy still minimal | Integration-style tests passed in PR #2 |
-| `git_status` | P0 | PARTIAL | Read-only git status exists in `crates/tools/src/git.rs`; not wired to agent dispatcher yet | Temp repo test passed in PR #2 |
-| `git_diff` | P0 | PARTIAL | Read-only git diff exists in `crates/tools/src/git.rs`; not wired to agent dispatcher yet | Temp repo test passed in PR #2 |
+| `read_file` | P0 | PARTIAL | Implemented and dry-run wired; not wired to WebUI/model loop | PR #4 dry-run smoke test passed |
+| `write_file` | P0 | PARTIAL | Implemented and dry-run wired; approval mode not wired yet | PR #4 dry-run smoke test passed |
+| `delete_file` | P0 | PARTIAL | Implemented and dry-run wired; approval mode not wired yet | PR #4 dry-run smoke test passed |
+| `list_dir` | P0 | PARTIAL | Implemented and dry-run wired; not wired to WebUI/model loop | PR #4 dry-run smoke test passed |
+| `shell` | P0 | PARTIAL | Bounded runner exists; policy still minimal | Integration-style tests passed in PR #2/PR #4 |
+| `git_status` | P0 | PARTIAL | Implemented and dry-run wired; not wired to WebUI/model loop | PR #4 dispatcher/evidence test passed |
+| `git_diff` | P0 | PARTIAL | Implemented and dry-run wired; not wired to WebUI/model loop | PR #4 dispatcher/evidence test passed |
 | `git_commit` | P1 | MISSING | Explicit approval required | Integration test |
 | Browser screenshot proof | P1 | MISSING | Browser-driven screenshot with run ID | Browser proof artifact |
 | Web/search adapter | P2 | MISSING | Optional; not required for first local coding loop | Network-gated test |
