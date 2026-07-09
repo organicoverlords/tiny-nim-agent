@@ -1,5 +1,6 @@
 pub mod http;
 pub mod smoke_events;
+pub mod smoke_report;
 
 use std::path::Path;
 use tiny_agent_core::{run_first_smoke_dry_run, AgentError, SessionState};
