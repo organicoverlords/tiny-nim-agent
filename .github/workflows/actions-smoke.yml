@@ -1,0 +1,15 @@
+name: Actions Smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Actions event smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prove Actions runner starts
+        run: echo "actions-smoke-ok"
