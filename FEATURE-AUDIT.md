@@ -66,6 +66,12 @@ PR #8 proved the minimal HTTP smoke route and page:
 - CI run `28988458741`: `NIM secret preflight` succeeded.
 - CI run `28988458741`: `Rust workspace and guardrails` succeeded.
 
+PR #10 proved visible smoke proof cards and an event-stream route:
+
+- Actions Smoke run `28989521234`: `Actions event smoke` succeeded.
+- CI run `28989521201`: `NIM secret preflight` succeeded.
+- CI run `28989521201`: `Rust workspace and guardrails` succeeded.
+
 The Rust job passed:
 
 - `cargo metadata --format-version 1 --no-deps`
@@ -87,27 +93,27 @@ The Rust job passed:
 | No-stubs policy | P0 | DONE | `docs/NO_STUBS_POLICY.md` committed |
 | Old-project audit boundary | P0 | DONE | `docs/OLD_PROJECTS_AUDIT.md` committed |
 | Roadmap | P0 | DONE | `docs/ROADMAP.md` committed |
-| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script, PR #2/#4/#6/#8 CI proof |
+| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script, PR #2/#4/#6/#8/#10 CI proof |
 | Reference-first implementation rule | P0 | DONE | README, AGENTS, and this audit define the rule |
-| CI guardrails | P0 | DONE | PR #2, PR #4, PR #6, and PR #8 CI proof |
+| CI guardrails | P0 | DONE | PR #2, PR #4, PR #6, PR #8, and PR #10 CI proof |
 
 ### 2. Rust workspace
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
 | Workspace `Cargo.toml` | P0 | DONE | None for workspace scaffold | Repeated PR CI metadata success |
-| `crates/nim_router` | P0 | PARTIAL | No live NIM call yet | Unit tests passed in PR #2/#4/#6/#8 |
-| `crates/model_contract` | P0 | PARTIAL | Streaming normalization still minimal | Contract tests passed in PR #2/#4/#6/#8 |
-| `crates/agent_core` | P0 | PARTIAL | Dry-run smoke session exists; no model loop yet | Dry-run tests passed in PR #4/#6/#8 |
-| `crates/tools` | P0 | PARTIAL | File, shell, and git-read tools exist; approval policy still minimal | Integration-style tests passed in PR #2/#4/#6/#8 |
-| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | Unit tests passed in PR #2/#4/#6/#8 |
-| `apps/webui` | P0 | PARTIAL | HTTP smoke route/page exist; no SSE/browser proof/live NIM yet | PR #8 HTTP smoke route test passed |
+| `crates/nim_router` | P0 | PARTIAL | No live NIM call yet | Unit tests passed in PR #2/#4/#6/#8/#10 |
+| `crates/model_contract` | P0 | PARTIAL | Streaming normalization still minimal | Contract tests passed in PR #2/#4/#6/#8/#10 |
+| `crates/agent_core` | P0 | PARTIAL | Dry-run smoke session exists; no model loop yet | Dry-run tests passed in PR #4/#6/#8/#10 |
+| `crates/tools` | P0 | PARTIAL | File, shell, and git-read tools exist; approval policy still minimal | Integration-style tests passed in PR #2/#4/#6/#8/#10 |
+| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | Unit tests passed in PR #2/#4/#6/#8/#10 |
+| `apps/webui` | P0 | PARTIAL | HTTP route/page/cards/events exist; no browser screenshot/live NIM yet | PR #10 cards/events route tests passed |
 
 ### 3. NIM routing
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; no live NIM request yet | Redacted config test passed in PR #2/#4/#6/#8 |
+| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; no live NIM request yet | Redacted config test passed in PR #2/#4/#6/#8/#10 |
 | Deterministic model order | P0 | PARTIAL | Config parser exists; live route not wired | Test proves order stable across runs |
 | Failure classification | P0 | PARTIAL | Provider/tool classification exists; no live route ledger yet | Unit table tests |
 | Cooldowns | P0 | PARTIAL | Cooldown policy exists; no persisted route ledger yet | Time-controlled unit tests |
@@ -119,13 +125,13 @@ The Rust job passed:
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Session state machine | P0 | PARTIAL | Minimal state machine exists; no model loop yet | State transition tests passed in PR #2/#4/#6/#8 |
-| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists | Fixture test passed in PR #2/#4/#6/#8 |
-| Tool-call loop | P0 | PARTIAL | Dry-run file/git tool calls execute and write proof evidence; no model loop yet | Dry-run smoke tests passed in PR #4/#6/#8 |
+| Session state machine | P0 | PARTIAL | Minimal state machine exists; no model loop yet | State transition tests passed in PR #2/#4/#6/#8/#10 |
+| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists | Fixture test passed in PR #2/#4/#6/#8/#10 |
+| Tool-call loop | P0 | PARTIAL | Dry-run file/git tool calls execute and write proof evidence; no model loop yet | Dry-run smoke tests passed in PR #4/#6/#8/#10 |
 | Loop detector | P0 | MISSING | Detect repeated action/input/tool pattern | Unit tests |
-| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists | Unit tests passed in PR #2/#4/#6/#8 |
-| Final-claim verifier | P0 | PARTIAL | Required evidence verifier finalizes dry-run session; no natural final-answer integration | Dry-run smoke tests passed in PR #4/#6/#8 |
-| First local smoke session | P0 | PARTIAL | Exposed through HTTP route; no live NIM/browser screenshot yet | PR #8 HTTP smoke route test passed |
+| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists | Unit tests passed in PR #2/#4/#6/#8/#10 |
+| Final-claim verifier | P0 | PARTIAL | Required evidence verifier finalizes dry-run session; no natural final-answer integration | Dry-run smoke tests passed in PR #4/#6/#8/#10 |
+| First local smoke session | P0 | PARTIAL | Exposed through HTTP/card/event routes; no live NIM/browser screenshot yet | PR #10 cards/events route tests passed |
 | Context compaction | P1 | MISSING | Summarize old turns without losing objective ledger | Long-run fixture |
 | Pause/stop/resume | P2 | MISSING | Real runtime cancellation, not fake controls | Browser/runtime proof |
 
@@ -133,13 +139,13 @@ The Rust job passed:
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| `read_file` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #8 HTTP smoke route test passed |
-| `write_file` | P0 | PARTIAL | Implemented and dry-run wired; approval mode not wired yet | PR #8 HTTP smoke route test passed |
-| `delete_file` | P0 | PARTIAL | Implemented and dry-run wired; approval mode not wired yet | PR #8 HTTP smoke route test passed |
-| `list_dir` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #8 HTTP smoke route test passed |
-| `shell` | P0 | PARTIAL | Bounded runner exists; policy still minimal | Integration-style tests passed in PR #2/#4/#6/#8 |
-| `git_status` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #8 HTTP smoke route test passed |
-| `git_diff` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #8 HTTP smoke route test passed |
+| `read_file` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #10 cards/events route tests passed |
+| `write_file` | P0 | PARTIAL | Implemented and dry-run wired; approval mode not wired yet | PR #10 cards/events route tests passed |
+| `delete_file` | P0 | PARTIAL | Implemented and dry-run wired; approval mode not wired yet | PR #10 cards/events route tests passed |
+| `list_dir` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #10 cards/events route tests passed |
+| `shell` | P0 | PARTIAL | Bounded runner exists; policy still minimal | Integration-style tests passed in PR #2/#4/#6/#8/#10 |
+| `git_status` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #10 cards/events route tests passed |
+| `git_diff` | P0 | PARTIAL | Implemented and dry-run wired; not wired to model loop | PR #10 cards/events route tests passed |
 | `git_commit` | P1 | MISSING | Explicit approval required | Integration test |
 | Browser screenshot proof | P1 | MISSING | Browser-driven screenshot with run ID | Browser proof artifact |
 | Web/search adapter | P2 | MISSING | Optional; not required for first local coding loop | Network-gated test |
@@ -149,13 +155,13 @@ The Rust job passed:
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
 | ChatGPT-like chat UI | P0 | MISSING | Basic conversation page with familiar composer/messages/sidebar feel | Screenshot |
-| WebUI app-layer smoke API | P0 | PARTIAL | `run_smoke_for_workspace` exists and has HTTP route; no SSE/browser proof yet | PR #8 HTTP smoke route test passed |
-| Minimal smoke HTTP route | P0 | PARTIAL | `/` and `/api/smoke/dry-run` exist; not final UI | PR #8 HTTP route tests passed |
-| SSE streaming | P0 | MISSING | Token/tool/progress events | Browser proof |
+| WebUI app-layer smoke API | P0 | PARTIAL | Smoke path has HTTP, cards, and events; no browser proof/live NIM yet | PR #10 route tests passed |
+| Minimal smoke HTTP route | P0 | PARTIAL | `/`, `/api/smoke/dry-run`, `/smoke/cards`, and `/api/smoke/events` exist | PR #10 route tests passed |
+| SSE streaming | P0 | PARTIAL | Smoke proof event stream exists; no live model token streaming yet | PR #10 event-stream route test passed |
 | OpenCode-like agentic coding loop | P0 | MISSING | Plan/tool/observe/verify loop for coding tasks | Ledger proof |
 | Visible model route cards | P0 | MISSING | Show selected model and fallback attempts | Browser proof |
-| Visible tool cards | P0 | MISSING | Running/succeeded/failed tool states | Browser proof |
-| Run proof panel | P0 | MISSING | Link ledger, screenshots, final verifier | Browser proof |
+| Visible tool cards | P0 | PARTIAL | Smoke tool cards exist; full live run cards need browser proof | PR #10 smoke cards route test passed |
+| Run proof panel | P0 | PARTIAL | Smoke cards/events expose proof; no dedicated full run panel yet | PR #10 route tests passed |
 | Export run ledger | P0 | MISSING | JSON export route | API test |
 | Six-phase benchmark runner | P1 | MISSING | Normal WebUI prompt only, no harness bypass | Full proof artifacts |
 
