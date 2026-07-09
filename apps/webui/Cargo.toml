@@ -15,5 +15,9 @@ tiny-tools = { path = "../../crates/tools" }
 name = "tiny_webui"
 path = "src/lib.rs"
 
+[[bin]]
+name = "tiny-webui"
+path = "src/main.rs"
+
 [lints]
 workspace = true

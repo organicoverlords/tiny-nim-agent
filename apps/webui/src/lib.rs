@@ -1,3 +1,5 @@
+pub mod http;
+
 use std::path::Path;
 use tiny_agent_core::{run_first_smoke_dry_run, AgentError, SessionState};
 use tiny_proof::{ProofEvent, RunLedger};
