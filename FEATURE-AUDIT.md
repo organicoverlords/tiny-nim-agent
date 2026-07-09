@@ -65,9 +65,9 @@ This is the canonical product scope, status, proof, and completion contract for 
 | Workspace `Cargo.toml` | P0 | PARTIAL | CI result not observed | `cargo metadata` passes |
 | `crates/nim_router` | P0 | PARTIAL | CI result not observed; no live NIM call yet | Unit tests for failure classification and cooldowns |
 | `crates/model_contract` | P0 | PARTIAL | CI result not observed | Fixture tests for valid, malformed, empty responses |
-| `crates/agent_core` | P0 | PARTIAL | CI result not observed; no dry-run model loop yet | Unit tests and one dry-run session proof |
+| `crates/agent_core` | P0 | PARTIAL | Tool dispatcher exists; CI result not observed | Unit tests and one dry-run session proof |
 | `crates/tools` | P0 | PARTIAL | File and shell tools exist; CI result not observed | Integration tests using temp repos |
-| `crates/proof` | P0 | PARTIAL | CI result not observed; no JSON export yet | JSON schema tests and proof fixture |
+| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | JSON schema tests and proof fixture |
 | `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Browser proof screenshot tied to run ID |
 
 ### 3. NIM routing
@@ -88,7 +88,7 @@ This is the canonical product scope, status, proof, and completion contract for 
 |---|---:|---|---|---|
 | Session state machine | P0 | PARTIAL | Minimal state machine exists; CI not observed | State transition tests |
 | Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists; CI not observed | Fixture test |
-| Tool-call loop | P0 | MISSING | Execute validated tool calls and feed observations back | Dry-run proof |
+| Tool-call loop | P0 | PARTIAL | Validated file-tool calls execute and write proof evidence; no model loop yet | Dry-run proof |
 | Loop detector | P0 | MISSING | Detect repeated action/input/tool pattern | Unit tests |
 | Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists; CI not observed | Unit tests |
 | Final-claim verifier | P0 | PARTIAL | Required evidence verifier exists; no final-answer integration | Fixture tests |
