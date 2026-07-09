@@ -6,6 +6,11 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[dependencies]
+tiny-agent-core = { path = "../../crates/agent_core" }
+tiny-proof = { path = "../../crates/proof" }
+tiny-tools = { path = "../../crates/tools" }
+
 [lib]
 name = "tiny_webui"
 path = "src/lib.rs"
