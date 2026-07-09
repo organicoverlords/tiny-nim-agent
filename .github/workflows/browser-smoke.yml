@@ -16,8 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install Playwright browser
-        run: npx playwright@1.46.1 install --with-deps chromium
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.46.1
+          npx playwright install --with-deps chromium
       - name: Build webui
         run: cargo build -p tiny-webui
       - name: Prepare proof workspace
@@ -36,7 +38,7 @@ jobs:
           cat /tmp/tiny-webui.log
           exit 1
       - name: Run browser smoke proof
-        run: npx -p playwright@1.46.1 node scripts/browser_smoke.mjs
+        run: node scripts/browser_smoke.mjs
       - name: Upload browser proof artifacts
         uses: actions/upload-artifact@v4
         with:
