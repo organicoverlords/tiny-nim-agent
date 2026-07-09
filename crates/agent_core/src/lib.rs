@@ -159,7 +159,8 @@ pub fn run_first_smoke_dry_run(workspace: &WorkspaceRoot) -> Result<Session, Age
             "file_deleted".to_string(),
         ],
     )])?;
-    let mut session = Session::new(RunId::new("dry-run-first-smoke")?, plan, 10)?;
+    let run_id = RunId::new("dry-run-first-smoke").map_err(AgentError::Proof)?;
+    let mut session = Session::new(run_id, plan, 10)?;
     let calls = [
         ToolCall {
             name: "list_dir".to_string(),
@@ -218,8 +219,11 @@ fn execute_workspace_tool(workspace: &WorkspaceRoot, call: &ToolCall) -> Result<
                 .map(|entries| entries.join("\n"))
                 .map_err(AgentError::Tool)
         }
-        "git_status" => git_output("git_status", git_status(workspace)?),
-        "git_diff" => git_output("git_diff", git_diff(workspace)?),
+        "git_status" => git_output(
+            "git_status",
+            git_status(workspace).map_err(AgentError::Tool)?,
+        ),
+        "git_diff" => git_output("git_diff", git_diff(workspace).map_err(AgentError::Tool)?),
         other => Err(AgentError::UnknownTool { name: other.to_string() }),
     }
 }
