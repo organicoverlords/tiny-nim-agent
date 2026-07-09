@@ -1,6 +1,6 @@
 use tiny_model_contract::ToolCall;
 use tiny_proof::{verify_required_evidence, ProofError, ProofEvent, RunId, RunLedger};
-use tiny_tools::{ToolError, WorkspaceRoot};
+use tiny_tools::{git_diff, git_status, GitOutput, ToolError, WorkspaceRoot};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SessionState {
@@ -147,6 +147,53 @@ impl Session {
     }
 }
 
+pub fn run_first_smoke_dry_run(workspace: &WorkspaceRoot) -> Result<Session, AgentError> {
+    let plan = SessionPlan::new(vec![Objective::new(
+        "first_smoke",
+        vec![
+            "dir_listed".to_string(),
+            "git_status_checked".to_string(),
+            "git_diff_checked".to_string(),
+            "file_written".to_string(),
+            "file_read".to_string(),
+            "file_deleted".to_string(),
+        ],
+    )])?;
+    let mut session = Session::new(RunId::new("dry-run-first-smoke")?, plan, 10)?;
+    let calls = [
+        ToolCall {
+            name: "list_dir".to_string(),
+            args_json: "{\"path\":\".\"}".to_string(),
+        },
+        ToolCall {
+            name: "git_status".to_string(),
+            args_json: "{}".to_string(),
+        },
+        ToolCall {
+            name: "git_diff".to_string(),
+            args_json: "{}".to_string(),
+        },
+        ToolCall {
+            name: "write_file".to_string(),
+            args_json: "{\"path\":\"agent-smoke.txt\",\"content\":\"dry run ok\"}".to_string(),
+        },
+        ToolCall {
+            name: "read_file".to_string(),
+            args_json: "{\"path\":\"agent-smoke.txt\"}".to_string(),
+        },
+        ToolCall {
+            name: "delete_file".to_string(),
+            args_json: "{\"path\":\"agent-smoke.txt\"}".to_string(),
+        },
+    ];
+    for call in &calls {
+        session.execute_tool_call(workspace, call)?;
+    }
+    session.verify_objective("first_smoke")?;
+    session.finalize_if_complete()?;
+    Ok(session)
+}
+
 fn execute_workspace_tool(workspace: &WorkspaceRoot, call: &ToolCall) -> Result<String, AgentError> {
     match call.name.as_str() {
         "read_file" => {
@@ -171,7 +218,20 @@ fn execute_workspace_tool(workspace: &WorkspaceRoot, call: &ToolCall) -> Result<
                 .map(|entries| entries.join("\n"))
                 .map_err(AgentError::Tool)
         }
+        "git_status" => git_output("git_status", git_status(workspace)?),
+        "git_diff" => git_output("git_diff", git_diff(workspace)?),
         other => Err(AgentError::UnknownTool { name: other.to_string() }),
+    }
+}
+
+fn git_output(tool: &str, output: GitOutput) -> Result<String, AgentError> {
+    if output.exit_code == Some(0) {
+        Ok(output.stdout)
+    } else {
+        Err(AgentError::GitFailed {
+            tool: tool.to_string(),
+            exit_code: output.exit_code,
+        })
     }
 }
 
@@ -181,6 +241,8 @@ fn evidence_key(tool_name: &str) -> &str {
         "write_file" => "file_written",
         "delete_file" => "file_deleted",
         "list_dir" => "dir_listed",
+        "git_status" => "git_status_checked",
+        "git_diff" => "git_diff_checked",
         _ => "tool_completed",
     }
 }
@@ -207,6 +269,7 @@ pub enum AgentError {
     UnknownTool { name: String },
     MissingArg { key: String },
     OpenObjectivesRemain,
+    GitFailed { tool: String, exit_code: Option<i32> },
     Proof(ProofError),
     Tool(ToolError),
 }
@@ -215,6 +278,7 @@ pub enum AgentError {
 mod tests {
     use super::*;
     use std::fs;
+    use std::process::Command;
     use std::time::{SystemTime, UNIX_EPOCH};
     use tiny_proof::ProofEvent;
 
@@ -225,7 +289,7 @@ mod tests {
             vec!["file_written".to_string()],
         )])
         .unwrap();
-        Session::new(run_id, plan, 6).unwrap()
+        Session::new(run_id, plan, 8).unwrap()
     }
 
     fn workspace() -> WorkspaceRoot {
@@ -236,6 +300,17 @@ mod tests {
         let root = std::env::temp_dir().join(format!("tiny-agent-core-{nonce}"));
         fs::create_dir_all(&root).unwrap();
         WorkspaceRoot::new(root).unwrap()
+    }
+
+    fn git_workspace() -> WorkspaceRoot {
+        let workspace = workspace();
+        let status = Command::new("git")
+            .args(["init"])
+            .current_dir(workspace.root_path())
+            .status()
+            .unwrap();
+        assert!(status.success());
+        workspace
     }
 
     #[test]
@@ -289,6 +364,50 @@ mod tests {
     }
 
     #[test]
+    fn executes_git_status_and_diff_with_evidence() {
+        let mut session = session();
+        let workspace = git_workspace();
+        let status_output = session
+            .execute_tool_call(
+                &workspace,
+                &ToolCall {
+                    name: "git_status".to_string(),
+                    args_json: "{}".to_string(),
+                },
+            )
+            .unwrap();
+        let diff_output = session
+            .execute_tool_call(
+                &workspace,
+                &ToolCall {
+                    name: "git_diff".to_string(),
+                    args_json: "{}".to_string(),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(status_output, "");
+        assert_eq!(diff_output, "");
+        assert!(session.ledger.has_evidence("git_status_checked"));
+        assert!(session.ledger.has_evidence("git_diff_checked"));
+    }
+
+    #[test]
+    fn first_smoke_dry_run_reaches_final_and_deletes_file() {
+        let workspace = git_workspace();
+        let session = run_first_smoke_dry_run(&workspace).unwrap();
+
+        assert_eq!(session.state, SessionState::Final);
+        assert!(session.ledger.has_evidence("dir_listed"));
+        assert!(session.ledger.has_evidence("git_status_checked"));
+        assert!(session.ledger.has_evidence("git_diff_checked"));
+        assert!(session.ledger.has_evidence("file_written"));
+        assert!(session.ledger.has_evidence("file_read"));
+        assert!(session.ledger.has_evidence("file_deleted"));
+        assert!(!workspace.root_path().join("agent-smoke.txt").exists());
+    }
+
+    #[test]
     fn session_fails_when_turn_budget_is_exceeded() {
         let mut session = session();
         session.advance(SessionState::Planning).unwrap();
@@ -297,6 +416,8 @@ mod tests {
         session.advance(SessionState::Verifying).unwrap();
         session.advance(SessionState::ModelTurn).unwrap();
         session.advance(SessionState::ToolTurn).unwrap();
+        session.advance(SessionState::Verifying).unwrap();
+        session.advance(SessionState::ModelTurn).unwrap();
         let err = session.advance(SessionState::Verifying).unwrap_err();
         assert_eq!(err, AgentError::TurnBudgetExceeded);
         assert_eq!(session.state, SessionState::Failed);
