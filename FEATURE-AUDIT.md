@@ -40,6 +40,21 @@ This is the canonical product scope, status, proof, and completion contract for 
 - No benchmark prompt edits to make the app pass.
 - No hidden fallback or undocumented model order mutation.
 
+## Latest CI proof
+
+PR #2 proved Actions event delivery and Rust guardrails:
+
+- Actions Smoke run `28987144229`: `Actions event smoke` succeeded.
+- CI run `28987144205`: `Rust workspace and guardrails` succeeded.
+- CI run `28987144205`: `NIM secret preflight` succeeded.
+
+The Rust job passed:
+
+- `cargo metadata --format-version 1 --no-deps`
+- `cargo test --workspace`
+- `bash scripts/check_no_placeholders.sh`
+- `python3 scripts/check_line_count.py`
+
 ## MVP feature matrix
 
 ### 1. Repository and documentation
@@ -54,30 +69,30 @@ This is the canonical product scope, status, proof, and completion contract for 
 | No-stubs policy | P0 | DONE | `docs/NO_STUBS_POLICY.md` committed |
 | Old-project audit boundary | P0 | DONE | `docs/OLD_PROJECTS_AUDIT.md` committed |
 | Roadmap | P0 | DONE | `docs/ROADMAP.md` committed |
-| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script |
+| 600-line file ceiling | P0 | DONE | README, AGENTS, audit, CI guard script, PR #2 CI proof |
 | Reference-first implementation rule | P0 | DONE | README, AGENTS, and this audit define the rule |
-| CI guardrails | P0 | PARTIAL | Workflow fixed; Actions event/status still not observed |
+| CI guardrails | P0 | DONE | PR #2: CI run `28987144205` and smoke run `28987144229` |
 
 ### 2. Rust workspace
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Workspace `Cargo.toml` | P0 | PARTIAL | CI result not observed | `cargo metadata` passes |
-| `crates/nim_router` | P0 | PARTIAL | CI result not observed; no live NIM call yet | Unit tests for failure classification and cooldowns |
-| `crates/model_contract` | P0 | PARTIAL | CI result not observed | Fixture tests for valid, malformed, empty responses |
-| `crates/agent_core` | P0 | PARTIAL | Tool dispatcher exists; CI result not observed | Unit tests and one dry-run session proof |
-| `crates/tools` | P0 | PARTIAL | File, shell, and git-read tools exist; CI result not observed | Integration tests using temp repos |
-| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | JSON schema tests and proof fixture |
-| `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Browser proof screenshot tied to run ID |
+| Workspace `Cargo.toml` | P0 | DONE | None for workspace scaffold | PR #2 `cargo metadata` success |
+| `crates/nim_router` | P0 | PARTIAL | No live NIM call yet | Unit tests for failure classification and cooldowns passed in PR #2 |
+| `crates/model_contract` | P0 | PARTIAL | Streaming normalization still minimal | Contract tests passed in PR #2 |
+| `crates/agent_core` | P0 | PARTIAL | Tool dispatcher exists; no model loop yet | Unit tests and dry-run tool evidence test passed in PR #2 |
+| `crates/tools` | P0 | PARTIAL | File, shell, and git-read tools exist; approval policy still minimal | Integration-style temp workspace tests passed in PR #2 |
+| `crates/proof` | P0 | PARTIAL | Ledger run-id accessor exists; no JSON export yet | Unit tests passed in PR #2 |
+| `apps/webui` | P0 | PARTIAL | Target descriptor only; no UI/server yet | Unit test passed in PR #2 |
 
 ### 3. NIM routing
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; CI/liveness not observed | Redacted config test |
-| Deterministic model order | P0 | PARTIAL | Config parser exists; CI not observed | Test proves order stable across runs |
-| Failure classification | P0 | PARTIAL | Provider/tool classification exists; CI not observed | Unit table tests |
-| Cooldowns | P0 | PARTIAL | Cooldown policy exists; CI not observed | Time-controlled unit tests |
+| NIM provider config | P0 | PARTIAL | Reads `NIM_KEY`; no live NIM request yet | Redacted config test passed in PR #2 |
+| Deterministic model order | P0 | PARTIAL | Config parser exists; live route not wired | Test proves order stable across runs |
+| Failure classification | P0 | PARTIAL | Provider/tool classification exists; no live route ledger yet | Unit table tests |
+| Cooldowns | P0 | PARTIAL | Cooldown policy exists; no persisted route ledger yet | Time-controlled unit tests |
 | Route ledger | P0 | MISSING | Route attempt type exists, but no persisted run ledger integration yet | Ledger fixture test |
 | Malformed tool-call repair | P1 | MISSING | Not implemented | Fixture test with malformed JSON |
 | Required-tool correction | P1 | MISSING | Contract can classify missing tool; correction loop not implemented | Fixture test |
@@ -86,12 +101,12 @@ This is the canonical product scope, status, proof, and completion contract for 
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| Session state machine | P0 | PARTIAL | Minimal state machine exists; CI not observed | State transition tests |
-| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists; CI not observed | Fixture test |
-| Tool-call loop | P0 | PARTIAL | Validated file-tool calls execute and write proof evidence; no model loop yet | Dry-run proof |
+| Session state machine | P0 | PARTIAL | Minimal state machine exists; no model loop yet | State transition tests passed in PR #2 |
+| Objective ledger | P0 | PARTIAL | Minimal objective/evidence verification exists | Fixture test passed in PR #2 |
+| Tool-call loop | P0 | PARTIAL | Validated file-tool calls execute and write proof evidence; no model loop yet | Dry-run proof test passed in PR #2 |
 | Loop detector | P0 | MISSING | Detect repeated action/input/tool pattern | Unit tests |
-| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists; CI not observed | Unit tests |
-| Final-claim verifier | P0 | PARTIAL | Required evidence verifier exists; no final-answer integration | Fixture tests |
+| Max turn / budget guard | P0 | PARTIAL | Minimal max-turn guard exists | Unit tests passed in PR #2 |
+| Final-claim verifier | P0 | PARTIAL | Required evidence verifier exists; no final-answer integration | Fixture tests passed in PR #2 |
 | Context compaction | P1 | MISSING | Summarize old turns without losing objective ledger | Long-run fixture |
 | Pause/stop/resume | P2 | MISSING | Real runtime cancellation, not fake controls | Browser/runtime proof |
 
@@ -99,13 +114,13 @@ This is the canonical product scope, status, proof, and completion contract for 
 
 | Feature | Pri | Status | Missing work | Required proof |
 |---|---:|---|---|---|
-| `read_file` | P0 | PARTIAL | Implemented in `crates/tools`; CI result not observed | Temp repo test |
-| `write_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp repo test |
-| `delete_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp repo test |
-| `list_dir` | P0 | PARTIAL | Implemented in `crates/tools`; CI result not observed | Temp repo test |
-| `shell` | P0 | PARTIAL | Bounded runner exists; CI result not observed; policy still minimal | Integration test |
-| `git_status` | P0 | PARTIAL | Read-only git status exists in `crates/tools/src/git.rs`; CI not observed | Temp repo test |
-| `git_diff` | P0 | PARTIAL | Read-only git diff exists in `crates/tools/src/git.rs`; CI not observed | Temp repo test |
+| `read_file` | P0 | PARTIAL | Implemented in `crates/tools`; not wired to WebUI/model loop | Temp workspace test passed in PR #2 |
+| `write_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp workspace test passed in PR #2 |
+| `delete_file` | P0 | PARTIAL | Implemented in `crates/tools`; approval mode not wired yet | Temp workspace test passed in PR #2 |
+| `list_dir` | P0 | PARTIAL | Implemented in `crates/tools`; not wired to WebUI/model loop | Temp workspace test passed in PR #2 |
+| `shell` | P0 | PARTIAL | Bounded runner exists; policy still minimal | Integration-style tests passed in PR #2 |
+| `git_status` | P0 | PARTIAL | Read-only git status exists in `crates/tools/src/git.rs`; not wired to agent dispatcher yet | Temp repo test passed in PR #2 |
+| `git_diff` | P0 | PARTIAL | Read-only git diff exists in `crates/tools/src/git.rs`; not wired to agent dispatcher yet | Temp repo test passed in PR #2 |
 | `git_commit` | P1 | MISSING | Explicit approval required | Integration test |
 | Browser screenshot proof | P1 | MISSING | Browser-driven screenshot with run ID | Browser proof artifact |
 | Web/search adapter | P2 | MISSING | Optional; not required for first local coding loop | Network-gated test |
